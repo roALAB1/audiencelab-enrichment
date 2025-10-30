@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
 
   if (!creditSystem) return null;
 
-  const { credits } = creditSystem;
+  const { credits, isAdminMode, toggleAdminMode } = creditSystem;
   const creditPercentage = (credits.balance / credits.plan_limit) * 100;
   
   const toggleDarkMode = () => {
@@ -31,12 +31,31 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
           <Menu size={24} />
         </button>
         <div className="flex-1 flex justify-end items-center space-x-4">
+          <button
+            onClick={toggleAdminMode}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              isAdminMode
+                ? 'bg-green-100 text-green-700 border border-green-300 hover:bg-green-200'
+                : 'bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200'
+            }`}
+            title={isAdminMode ? 'Admin Mode: Unlimited Credits' : 'User Mode: Limited Credits'}
+          >
+            {isAdminMode ? '👑 Admin Mode' : '👤 User Mode'}
+          </button>
           <div className="hidden md:block p-3 rounded-lg bg-slate-100 border border-slate-200">
             <div className="flex items-center space-x-3">
               <CreditCard className="text-blue-500" size={24} />
               <div>
                 <div className="text-sm font-semibold text-slate-800">
-                  {credits.balance.toLocaleString()} <span className="text-xs text-slate-500 font-normal">/ {credits.plan_limit.toLocaleString()} Credits</span>
+                  {isAdminMode ? (
+                    <>
+                      <span className="text-green-600">∞ Unlimited</span> <span className="text-xs text-slate-500 font-normal">Credits</span>
+                    </>
+                  ) : (
+                    <>
+                      {credits.balance.toLocaleString()} <span className="text-xs text-slate-500 font-normal">/ {credits.plan_limit.toLocaleString()} Credits</span>
+                    </>
+                  )}
                 </div>
                 <div className="w-40 bg-slate-200 rounded-full h-1.5 mt-1">
                   <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${creditPercentage}%` }}></div>
