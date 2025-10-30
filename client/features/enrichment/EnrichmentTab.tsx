@@ -128,18 +128,11 @@ const EnrichmentTab = () => {
             const enrichedContacts = await mockEnrichContactsParallel(
                 validationResult.valid,
                 selectedFields,
-                concurrency,
-                batchSize,
-                // Progress callback
                 (progressData) => {
                     setProgress({
                         ...progressData,
                         startTime,
                     });
-                },
-                // Batch complete callback
-                (batchIndex, contacts, usage) => {
-                    console.log(`Batch ${batchIndex} complete:`, contacts.length, 'contacts');
                 }
             );
 

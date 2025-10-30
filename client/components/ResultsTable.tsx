@@ -80,6 +80,12 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ data, fields, onExport }) =
                 // Escape commas and quotes
                 if (value === null || value === undefined) return '';
                 const str = String(value);
+                
+                // Fix phone numbers: wrap in quotes and add tab to prevent Excel formula interpretation
+                if (field.toLowerCase().includes('phone') && str.startsWith('+')) {
+                    return `"${str}"`;
+                }
+                
                 if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                     return `"${str.replace(/"/g, '""')}"`;
                 }
