@@ -1,13 +1,13 @@
 
 import React, { useState, useCallback, useContext, useMemo } from 'react';
-import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
-import { UploadCloud, FileIcon, CheckCircle, XCircle, AlertTriangle } from '@/components/ui/icons';
-import { ALL_FIELDS, FIELD_PACKAGES } from '@/constants';
-import { Field, FieldCategory, ValidationResult } from '@/types';
-import { CreditSystemContext } from '@/App';
-import { enrichContactsParallel } from '@/services/audienceLabAPI';
-import ProgressTracker, { ProgressData } from '@/components/ProgressTracker';
-import ResultsTable from '@/components/ResultsTable';
+import Card, { CardHeader, CardTitle } from '../../components/ui/Card';
+import { UploadCloud, FileIcon, CheckCircle, XCircle, AlertTriangle } from '../../components/ui/icons';
+import { ALL_FIELDS, FIELD_PACKAGES } from '../../constants';
+import { Field, FieldCategory, ValidationResult } from '../../types';
+import { CreditSystemContext } from '../../App';
+import { enrichContactsParallel } from '../../services/audienceLabAPI';
+import ProgressTracker, { ProgressData } from '../../components/ProgressTracker';
+import ResultsTable from '../../components/ResultsTable';
 
 type EnrichmentStatus = 'idle' | 'processing' | 'complete' | 'error';
 
