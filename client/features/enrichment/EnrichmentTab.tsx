@@ -143,6 +143,10 @@ const EnrichmentTab = () => {
                 }
             );
 
+            // Calculate processing time
+            const endTime = Date.now();
+            const processingTime = ((endTime - startTime) / 1000).toFixed(1);
+
             // Update results
             setResults(enrichedContacts);
             setStatus('complete');
@@ -150,8 +154,8 @@ const EnrichmentTab = () => {
             // Consume credits
             creditSystem.consumeCredits(costEstimate.total_credits);
 
-            // Show completion message
-            console.log('✅ Enrichment complete!', enrichedContacts.length, 'contacts enriched');
+            // Show completion message with metrics
+            console.log(`✅ Enrichment complete! Successfully enriched ${enrichedContacts.length} contact${enrichedContacts.length !== 1 ? 's' : ''} in ${processingTime}s`);
 
         } catch (err) {
             console.error('Enrichment error:', err);
@@ -173,6 +177,18 @@ const EnrichmentTab = () => {
 
             {status === 'complete' && results.length > 0 && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <h3 className="font-semibold text-green-900">Enrichment Complete!</h3>
+                    </div>
+                    <p className="text-sm text-green-700">
+                        Successfully enriched <strong>{results.length}</strong> contact{results.length !== 1 ? 's' : ''} in <strong>{progress?.startTime ? ((Date.now() - progress.startTime) / 1000).toFixed(1) : '0.0'}s</strong>
+                    </p>
+                </div>
+            )}
+
+            {status === 'complete' && results.length > 0 && (
+                <div className="p-4 bg-white border border-slate-200 rounded-lg">
                     <p className="text-green-800 font-semibold">
                         ✅ Enrichment Complete!
                     </p>
