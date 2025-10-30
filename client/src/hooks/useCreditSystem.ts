@@ -14,6 +14,7 @@ const initialCredits: UserCredits = {
 
 const useCreditSystem = () => {
     const [credits, setCredits] = useLocalStorage<UserCredits>('userCredits', initialCredits);
+    const [isAdminMode, setIsAdminMode] = useLocalStorage<boolean>('adminMode', true); // Admin mode enabled by default for testing
 
     const estimateCredits = useCallback((emailCount: number, selectedFieldIds: string[]) => {
         let creditsPerContact = 0;
@@ -34,29 +35,31 @@ const useCreditSystem = () => {
             credits_per_contact: creditsPerContact,
             total_credits: totalCredits,
             field_breakdown: fieldBreakdown,
-            can_afford: totalCredits <= credits.balance,
-            shortfall: Math.max(0, totalCredits - credits.balance),
-            current_balance: credits.balance,
-            remaining_after: credits.balance - totalCredits,
+            can_afford: isAdminMode ? true : totalCredits <= credits.balance, // Admin always has credits
+            shortfall: isAdminMode ? 0 : Math.max(0, totalCredits - credits.balance),
+            current_balance: isAdminMode ? 999999 : credits.balance, // Show unlimited for admin
+            remaining_after: isAdminMode ? 999999 : credits.balance - totalCredits,
         };
-    }, [credits.balance]);
+    }, [credits.balance, isAdminMode]);
 
     const consumeCredits = useCallback((amount: number) => {
+        if (isAdminMode) return; // Admin mode: don't consume credits
         setCredits(prev => ({
             ...prev,
             balance: prev.balance - amount,
             used_today: prev.used_today + amount,
             used_this_month: prev.used_this_month + amount,
         }));
-    }, [setCredits]);
+    }, [setCredits, isAdminMode]);
     
     const getWarning = useCallback(() => {
+        if (isAdminMode) return null; // No warnings in admin mode
         const percentage = (credits.balance / credits.plan_limit) * 100;
         if (percentage <= 5) return { level: 'critical', message: 'Critical: Only 5% credits remaining!' };
         if (percentage <= 10) return { level: 'warning', message: 'Warning: Only 10% credits remaining.' };
         if (percentage <= 20) return { level: 'info', message: 'Info: 20% credits remaining.' };
         return null;
-    }, [credits.balance, credits.plan_limit]);
+    }, [credits.balance, credits.plan_limit, isAdminMode]);
 
     return {
         credits,
@@ -64,6 +67,8 @@ const useCreditSystem = () => {
         consumeCredits,
         getWarning,
         setCredits, // For mock updates
+        isAdminMode,
+        setIsAdminMode,
     };
 };
 
