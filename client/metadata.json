@@ -1,0 +1,5 @@
+{
+  "name": "AudienceLab Enrichment Dashboard",
+  "description": "A comprehensive data enrichment dashboard for AudienceLab to enrich contact data, monitor data quality, track usage, and manage credits. Features a sophisticated credit system, per-field pricing, and advanced validation.",
+  "requestFramePermissions": []
+}
