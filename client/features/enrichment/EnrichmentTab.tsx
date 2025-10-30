@@ -5,7 +5,7 @@ import { UploadCloud, FileIcon, CheckCircle, XCircle, AlertTriangle } from '../.
 import { ALL_FIELDS, FIELD_PACKAGES } from '../../constants';
 import { Field, FieldCategory, ValidationResult } from '../../types';
 import { CreditSystemContext } from '../../App';
-import { enrichContactsParallel } from '../../services/audienceLabAPI';
+import { mockEnrichContactsParallel } from '../../services/mockEnrichmentAPI';
 import ProgressTracker, { ProgressData } from '../../components/ProgressTracker';
 import ResultsTable from '../../components/ResultsTable';
 
@@ -125,7 +125,7 @@ const EnrichmentTab = () => {
         const startTime = Date.now();
 
         try {
-            const enrichedContacts = await enrichContactsParallel(
+            const enrichedContacts = await mockEnrichContactsParallel(
                 validationResult.valid,
                 selectedFields,
                 concurrency,
