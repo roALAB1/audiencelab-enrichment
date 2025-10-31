@@ -64,3 +64,8 @@
 - [x] Test job submission and polling
 - [x] Deploy and verify on Vercel
 
+
+
+## Manus Platform Deployment
+- [x] Fix Docker build errors for Manus platform deployment
+
