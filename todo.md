@@ -61,6 +61,6 @@
 - [x] Add CSV download and parsing from job results
 - [x] Redesign EnrichmentTab UI for job-based workflow
 - [x] Update serverless function to proxy job endpoints
-- [ ] Test job submission and polling
-- [ ] Deploy and verify on Vercel
+- [x] Test job submission and polling
+- [x] Deploy and verify on Vercel
 
