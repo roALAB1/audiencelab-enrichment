@@ -1,7 +1,11 @@
 /**
  * CSV Parser Utility
  * 
- * Parses CSV files and extracts columns and data
+ * Parses CSV files with proper handling of:
+ * - Multi-line fields (newlines inside quotes)
+ * - Escaped quotes ("")
+ * - Commas inside quoted fields
+ * - JSON arrays and complex data
  */
 
 export interface ParsedCSV {
@@ -11,36 +15,32 @@ export interface ParsedCSV {
 }
 
 /**
- * Parse CSV file content
+ * Parse CSV file content with proper multi-line field support
  * 
  * @param csvText - Raw CSV text content
  * @returns Parsed CSV data with columns and rows
  */
 export function parseCSV(csvText: string): ParsedCSV {
-  const lines = csvText.trim().split('\n');
+  const records = parseCSVRecords(csvText);
   
-  if (lines.length === 0) {
+  if (records.length === 0) {
     return { columns: [], data: [], rowCount: 0 };
   }
 
-  // Parse header row
-  const headerLine = lines[0];
-  const columns = parseCSVLine(headerLine);
-
-  // Parse data rows
+  // First record is the header
+  const columns = records[0];
+  
+  // Convert remaining records to objects
   const data: Record<string, string>[] = [];
   
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue; // Skip empty lines
-
-    const values = parseCSVLine(line);
+  for (let i = 1; i < records.length; i++) {
+    const values = records[i];
     const row: Record<string, string> = {};
-
+    
     columns.forEach((column, index) => {
       row[column] = values[index] || '';
     });
-
+    
     data.push(row);
   }
 
@@ -52,42 +52,76 @@ export function parseCSV(csvText: string): ParsedCSV {
 }
 
 /**
- * Parse a single CSV line, handling quoted values and commas
+ * Parse CSV text into records (array of arrays)
+ * Handles multi-line fields properly by tracking quote state
  * 
- * @param line - CSV line to parse
- * @returns Array of values
+ * @param csvText - Raw CSV text
+ * @returns Array of records, where each record is an array of field values
  */
-function parseCSVLine(line: string): string[] {
-  const values: string[] = [];
-  let current = '';
+function parseCSVRecords(csvText: string): string[][] {
+  const records: string[][] = [];
+  let currentRecord: string[] = [];
+  let currentField = '';
   let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
+  
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+    
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
-        // Escaped quote
-        current += '"';
-        i++; // Skip next quote
+        // Escaped quote ("") - add one quote to field
+        currentField += '"';
+        i++; // Skip the next quote
       } else {
         // Toggle quote state
         inQuotes = !inQuotes;
       }
     } else if (char === ',' && !inQuotes) {
-      // End of value
-      values.push(current.trim());
-      current = '';
+      // End of field
+      currentRecord.push(currentField);
+      currentField = '';
+    } else if (char === '\n' && !inQuotes) {
+      // End of record (only if not inside quotes)
+      currentRecord.push(currentField);
+      if (currentRecord.some(field => field.trim() !== '')) {
+        // Only add non-empty records
+        records.push(currentRecord);
+      }
+      currentRecord = [];
+      currentField = '';
+    } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+      // Windows line ending (\r\n) - end of record
+      currentRecord.push(currentField);
+      if (currentRecord.some(field => field.trim() !== '')) {
+        records.push(currentRecord);
+      }
+      currentRecord = [];
+      currentField = '';
+      i++; // Skip the \n
+    } else if (char === '\r' && !inQuotes) {
+      // Mac line ending (\r) - end of record
+      currentRecord.push(currentField);
+      if (currentRecord.some(field => field.trim() !== '')) {
+        records.push(currentRecord);
+      }
+      currentRecord = [];
+      currentField = '';
     } else {
-      current += char;
+      // Regular character - add to current field
+      currentField += char;
     }
   }
-
-  // Add last value
-  values.push(current.trim());
-
-  return values;
+  
+  // Add last field and record if not empty
+  if (currentField || currentRecord.length > 0) {
+    currentRecord.push(currentField);
+    if (currentRecord.some(field => field.trim() !== '')) {
+      records.push(currentRecord);
+    }
+  }
+  
+  return records;
 }
 
 /**
@@ -126,7 +160,7 @@ function escapeCSVValue(value: any): string {
   const str = String(value);
 
   // Quote if contains comma, quote, or newline
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
 

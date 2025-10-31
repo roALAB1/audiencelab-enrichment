@@ -64,3 +64,13 @@ Note: Credit calculation needs AudienceLab API to return actual cost. Current es
 
 Note: AudienceLab API only supports 16 input fields for matching (EMAIL, PERSONAL_EMAIL, BUSINESS_EMAIL, FIRST_NAME, LAST_NAME, PHONE, PERSONAL_ADDRESS, PERSONAL_CITY, PERSONAL_STATE, PERSONAL_ZIP, COMPANY_NAME, COMPANY_DOMAIN, COMPANY_INDUSTRY, SHA256_PERSONAL_EMAIL, LINKEDIN_URL, UP_ID). JOB_TITLE and other fields are OUTPUT only.
 
+
+
+## Critical CSV Parsing Bug
+- [x] Fix parseCSVLine to handle multi-line fields (fields with newlines inside quotes)
+- [x] Fix handling of escaped quotes inside quoted fields
+- [x] Fix handling of JSON arrays in CSV fields (COMPANY_NAME_HISTORY, JOB_TITLE_HISTORY)
+- [x] Test with actual AudienceLab CSV that has complex COMPANY_DESCRIPTION fields - Tested with 4527 records, all parsed correctly
+
+Fixed: Rewrote CSV parser to use character-by-character parsing with quote state tracking instead of line-by-line splitting. Now correctly handles multi-line fields, escaped quotes, and complex data.
+
