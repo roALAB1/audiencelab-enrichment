@@ -37,3 +37,8 @@
 - [ ] Add webhook notifications for completed enrichments
 - [ ] Add team collaboration features (shared credits, user management)
 
+
+
+## In Progress
+- [x] Fix Vercel deployment build errors (package manager configuration)
+
