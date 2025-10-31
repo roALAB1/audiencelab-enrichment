@@ -53,3 +53,14 @@
 - [x] Fix Vercel serverless functions - backend API not accessible (returns HTML instead of API responses)
 - [x] Switch from mock API to real AudienceLab API via Vercel proxy
 
+
+
+## Job-Based API Redesign
+- [x] Update API client to support job submission (POST /enrichments)
+- [x] Add job polling functionality (GET /enrichments)
+- [x] Add CSV download and parsing from job results
+- [x] Redesign EnrichmentTab UI for job-based workflow
+- [x] Update serverless function to proxy job endpoints
+- [ ] Test job submission and polling
+- [ ] Deploy and verify on Vercel
+

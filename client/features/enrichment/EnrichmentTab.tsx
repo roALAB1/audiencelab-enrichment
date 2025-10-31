@@ -5,11 +5,11 @@ import { UploadCloud, FileIcon, CheckCircle, XCircle, AlertTriangle } from '../.
 import { ALL_FIELDS, FIELD_PACKAGES } from '../../constants';
 import { Field, FieldCategory, ValidationResult } from '../../types';
 import { CreditSystemContext } from '../../App';
-import { enrichContactsParallel } from '../../services/audienceLabAPI';
+import { enrichContactsJobBased, EnrichmentJob } from '../../services/audienceLabAPI';
 import ProgressTracker, { ProgressData } from '../../components/ProgressTracker';
 import ResultsTable from '../../components/ResultsTable';
 
-type EnrichmentStatus = 'idle' | 'processing' | 'complete' | 'error';
+type EnrichmentStatus = 'idle' | 'submitting' | 'polling' | 'downloading' | 'complete' | 'error';
 
 const EnrichmentTab = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -18,18 +18,15 @@ const EnrichmentTab = () => {
     const [activePackage, setActivePackage] = useState<string>('basic');
     const [status, setStatus] = useState<EnrichmentStatus>('idle');
     const [progress, setProgress] = useState<ProgressData | null>(null);
+    const [jobStatus, setJobStatus] = useState<string>('');  // Job status message
+    const [currentJob, setCurrentJob] = useState<EnrichmentJob | null>(null);
     const [results, setResults] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
     
-    // Settings from localStorage or defaults
-    const [concurrency, setConcurrency] = useState(() => {
-        const saved = localStorage.getItem('enrichment_concurrency');
-        return saved ? parseInt(saved) : 5;
-    });
-    const [batchSize, setBatchSize] = useState(() => {
-        const saved = localStorage.getItem('enrichment_batch_size');
-        return saved ? parseInt(saved) : 1000;
-    });
+    // Job-based API doesn't need concurrency/batch settings
+    // Keeping for UI compatibility but not used
+    const [concurrency] = useState(5);
+    const [batchSize] = useState(1000);
     
     const creditSystem = useContext(CreditSystemContext);
 
@@ -114,36 +111,54 @@ const EnrichmentTab = () => {
     const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
     const handleDrop = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); handleFileChange(e.dataTransfer.files); };
 
-    // Start enrichment
+    // Start enrichment with job-based API
     const handleStartEnrichment = async () => {
-        console.log('🔍 Enrichment button clicked!');
-        console.log('📊 Validation Result:', validationResult);
-        console.log('💰 Cost Estimate:', costEstimate);
-        console.log('⚙️ Credit System:', creditSystem);
-        console.log('👑 Admin Mode:', creditSystem?.isAdminMode);
-        
         if (!validationResult || !costEstimate || !creditSystem) {
-            console.error('❌ Missing required data:', { validationResult: !!validationResult, costEstimate: !!costEstimate, creditSystem: !!creditSystem });
+            console.error('❌ Missing required data');
             return;
         }
 
-        setStatus('processing');
         setError(null);
         setResults([]);
+        setProgress(null);
+        setCurrentJob(null);
         
         const startTime = Date.now();
+        const jobName = `Enrichment_${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
         try {
-            const enrichedContacts = await enrichContactsParallel(
+            const enrichedContacts = await enrichContactsJobBased(
+                jobName,
                 validationResult.valid,
                 selectedFields,
-                concurrency,
-                batchSize,
-                (progressData) => {
-                    setProgress({
-                        ...progressData,
-                        startTime,
-                    });
+                (statusUpdate) => {
+                    // Update status based on stage
+                    setStatus(statusUpdate.stage);
+                    
+                    // Update job status message
+                    if (statusUpdate.stage === 'submitting') {
+                        setJobStatus('Submitting enrichment job...');
+                    } else if (statusUpdate.stage === 'polling') {
+                        if (statusUpdate.job) {
+                            setCurrentJob(statusUpdate.job);
+                            setJobStatus(`Job Status: ${statusUpdate.job.status}`);
+                        }
+                    } else if (statusUpdate.stage === 'downloading') {
+                        setJobStatus('Downloading results...');
+                    }
+
+                    // Update progress bar
+                    if (statusUpdate.progress !== undefined) {
+                        setProgress({
+                            totalBatches: 1,
+                            completedBatches: statusUpdate.progress > 90 ? 1 : 0,
+                            totalEmails: validationResult.valid.length,
+                            processedEmails: Math.floor((validationResult.valid.length * statusUpdate.progress) / 100),
+                            percentage: statusUpdate.progress,
+                            creditsUsed: Math.floor((costEstimate.total_credits * statusUpdate.progress) / 100),
+                            startTime,
+                        });
+                    }
                 }
             );
 
@@ -154,17 +169,18 @@ const EnrichmentTab = () => {
             // Update results
             setResults(enrichedContacts);
             setStatus('complete');
+            setJobStatus(`Completed! Enriched ${enrichedContacts.length} contacts in ${processingTime}s`);
 
             // Consume credits
             creditSystem.consumeCredits(costEstimate.total_credits);
 
-            // Show completion message with metrics
-            console.log(`✅ Enrichment complete! Successfully enriched ${enrichedContacts.length} contact${enrichedContacts.length !== 1 ? 's' : ''} in ${processingTime}s`);
+            console.log(`✅ Enrichment complete! ${enrichedContacts.length} contacts in ${processingTime}s`);
 
         } catch (err) {
             console.error('Enrichment error:', err);
             setError(err instanceof Error ? err.message : 'An error occurred during enrichment');
             setStatus('error');
+            setJobStatus('Error occurred');
         }
     };
 
@@ -172,11 +188,34 @@ const EnrichmentTab = () => {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-slate-800">Enrichment</h1>
             
-            {status === 'processing' && progress && (
-                <ProgressTracker 
-                    progress={progress} 
-                    estimatedCredits={costEstimate?.total_credits}
-                />
+            {(status === 'submitting' || status === 'polling' || status === 'downloading') && (
+                <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <h3 className="font-semibold text-blue-900">{jobStatus}</h3>
+                    </div>
+                    {currentJob && (
+                        <div className="text-sm text-blue-700 space-y-1">
+                            <p>Job ID: <code className="bg-blue-100 px-2 py-0.5 rounded">{currentJob.id}</code></p>
+                            <p>Total Contacts: <strong>{currentJob.total}</strong></p>
+                            <p>Created: <strong>{new Date(currentJob.created_at).toLocaleString()}</strong></p>
+                        </div>
+                    )}
+                    {progress && (
+                        <div className="mt-4">
+                            <div className="flex justify-between text-sm text-blue-700 mb-2">
+                                <span>Progress</span>
+                                <span>{progress.percentage}%</span>
+                            </div>
+                            <div className="w-full bg-blue-200 rounded-full h-2">
+                                <div 
+                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${progress.percentage}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
 
             {status === 'complete' && results.length > 0 && (
