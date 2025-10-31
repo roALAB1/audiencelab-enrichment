@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 # Install pnpm
-RUN npm install -g pnpm@10.4.1
+RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
 
 # Set working directory
 WORKDIR /app
@@ -10,19 +10,23 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile --prod=false
+# Copy patches if they exist
+COPY patches ./patches
+
+# Install ALL dependencies (including devDependencies needed for build)
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
-# Build application
-RUN pnpm build
+# Build only the frontend (vite build)
+# Skip server build since nginx will serve static files only
+RUN pnpm exec vite build
 
 # Production stage
 FROM nginx:alpine
 
-# Copy built assets from builder
+# Copy built static assets from builder
 COPY --from=builder /app/dist/public /usr/share/nginx/html
 
 # Copy nginx configuration
