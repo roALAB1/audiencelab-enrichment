@@ -85,10 +85,13 @@
 - [x] Add OR/AND toggle for match logic
 - [x] Update job submission to include all selected input columns
 - [x] Update validation to support multi-field input (basic implementation)
-- [ ] Complete EnrichmentTab UI integration
+- [x] Create simplified ColumnMappingStep component (no shadcn dependencies)
+- [ ] Integrate ColumnMappingStep into EnrichmentTab workflow
 - [ ] Update cost estimation for multi-field matching
 - [ ] Test with various CSV structures
 - [ ] Deploy and verify multi-field matching works
 
 See MULTI_FIELD_PROGRESS.md for detailed implementation status
+
+Note: Project has dual structure (client/ and client/src/). Multi-field components created in client/ structure to match existing EnrichmentTab.
 

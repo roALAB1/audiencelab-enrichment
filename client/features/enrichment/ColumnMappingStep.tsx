@@ -4,73 +4,60 @@
  * Allows users to map CSV columns to AudienceLab input fields for matching
  */
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Info } from 'lucide-react';
-import type { ColumnMapping, MatchOperator, AudienceLabInputField } from '@/types/columnMapping';
+import React, { useEffect } from 'react';
+import type { ColumnMapping, MatchOperator, AudienceLabInputField } from '../../types/columnMapping';
 import {
   AUDIENCELAB_INPUT_FIELDS,
   autoDetectField,
   getFieldDisplayName,
   getFieldCategory,
-} from '@/types/columnMapping';
+} from '../../types/columnMapping';
 
 interface ColumnMappingStepProps {
   csvColumns: string[];
-  csvData: any[];
-  columnMappings: ColumnMapping[];
-  matchOperator: MatchOperator;
+  sampleData: Record<string, string>;
   onMappingsChange: (mappings: ColumnMapping[]) => void;
   onOperatorChange: (operator: MatchOperator) => void;
 }
 
 export default function ColumnMappingStep({
   csvColumns,
-  csvData,
-  columnMappings,
-  matchOperator,
+  sampleData,
   onMappingsChange,
   onOperatorChange,
 }: ColumnMappingStepProps) {
-  // Initialize mappings if empty
+  const [columnMappings, setColumnMappings] = React.useState<ColumnMapping[]>([]);
+  const [matchOperator, setMatchOperator] = React.useState<MatchOperator>('OR');
+
+  // Initialize mappings when CSV columns change
   useEffect(() => {
-    if (columnMappings.length === 0 && csvColumns.length > 0) {
+    if (csvColumns.length > 0 && columnMappings.length === 0) {
       const initialMappings: ColumnMapping[] = csvColumns.map(column => {
         const detectedField = autoDetectField(column);
-        const sampleValues = csvData
-          .slice(0, 3)
-          .map(row => row[column])
-          .filter(val => val && val.trim());
+        const sampleValue = sampleData[column] || '';
 
         return {
           csvColumn: column,
           audienceLabField: detectedField,
           enabled: detectedField !== null, // Auto-enable if detected
-          sampleValues,
+          sampleValues: sampleValue ? [sampleValue] : [],
         };
       });
 
+      setColumnMappings(initialMappings);
       onMappingsChange(initialMappings);
     }
-  }, [csvColumns, csvData, columnMappings.length, onMappingsChange]);
+  }, [csvColumns, sampleData]);
 
-  const handleMappingChange = (index: number, field: AudienceLabInputField | null) => {
+  const handleMappingChange = (index: number, field: string) => {
     const updated = [...columnMappings];
+    const audienceLabField = field === '' ? null : (field as AudienceLabInputField);
     updated[index] = {
       ...updated[index],
-      audienceLabField: field,
-      enabled: field !== null, // Auto-enable when field is selected
+      audienceLabField,
+      enabled: audienceLabField !== null,
     };
+    setColumnMappings(updated);
     onMappingsChange(updated);
   };
 
@@ -80,12 +67,18 @@ export default function ColumnMappingStep({
       ...updated[index],
       enabled: !updated[index].enabled,
     };
+    setColumnMappings(updated);
     onMappingsChange(updated);
+  };
+
+  const handleOperatorChange = (operator: MatchOperator) => {
+    setMatchOperator(operator);
+    onOperatorChange(operator);
   };
 
   const enabledCount = columnMappings.filter(m => m.enabled && m.audienceLabField).length;
 
-  // Group fields by category
+  // Group fields by category for the dropdown
   const fieldsByCategory = AUDIENCELAB_INPUT_FIELDS.reduce((acc, field) => {
     const category = getFieldCategory(field);
     if (!acc[category]) acc[category] = [];
@@ -94,136 +87,122 @@ export default function ColumnMappingStep({
   }, {} as Record<string, AudienceLabInputField[]>);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>2. Map Input Columns</CardTitle>
-        <CardDescription>
-          Select which CSV columns to use for matching contacts. Map each column to the corresponding AudienceLab field.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Match Operator Toggle */}
-        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <div className="space-y-1">
-            <Label htmlFor="match-operator" className="text-base font-semibold">
-              Match Logic
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              {matchOperator === 'OR' 
-                ? 'Match if ANY selected field matches (recommended for most cases)'
-                : 'Match only if ALL selected fields match (stricter matching)'}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className={`text-sm font-medium ${matchOperator === 'OR' ? 'text-primary' : 'text-muted-foreground'}`}>
-              OR
-            </span>
-            <Switch
-              id="match-operator"
-              checked={matchOperator === 'AND'}
-              onCheckedChange={(checked) => onOperatorChange(checked ? 'AND' : 'OR')}
-            />
-            <span className={`text-sm font-medium ${matchOperator === 'AND' ? 'text-primary' : 'text-muted-foreground'}`}>
-              AND
-            </span>
-          </div>
+    <div className="space-y-4">
+      {/* Match Operator Toggle */}
+      <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex-1">
+          <h4 className="font-semibold text-slate-800 mb-1">Match Logic</h4>
+          <p className="text-sm text-slate-600">
+            {matchOperator === 'OR' 
+              ? 'Match if ANY selected field matches (more permissive)' 
+              : 'Match only if ALL selected fields match (more strict)'}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleOperatorChange('OR')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              matchOperator === 'OR'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            OR
+          </button>
+          <button
+            onClick={() => handleOperatorChange('AND')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              matchOperator === 'AND'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            AND
+          </button>
+        </div>
+      </div>
+
+      {/* Column Mappings */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-slate-800">
+            CSV Columns ({enabledCount} selected for matching)
+          </h4>
         </div>
 
-        {/* Column Mappings */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Column Mappings</h3>
-            <Badge variant="secondary">
-              {enabledCount} {enabledCount === 1 ? 'field' : 'fields'} selected for matching
-            </Badge>
-          </div>
-
-          {columnMappings.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Info className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Upload a CSV file to see column mappings</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {columnMappings.map((mapping, index) => (
-                <div
-                  key={mapping.csvColumn}
-                  className={`flex items-center gap-4 p-4 border rounded-lg ${
-                    mapping.enabled ? 'bg-background' : 'bg-muted/50'
-                  }`}
-                >
-                  {/* Enable Toggle */}
-                  <Switch
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {columnMappings.map((mapping, index) => (
+            <div
+              key={mapping.csvColumn}
+              className={`p-4 border rounded-lg transition-colors ${
+                mapping.enabled
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-white border-slate-200'
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                {/* Enable/Disable Toggle */}
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
                     checked={mapping.enabled}
-                    onCheckedChange={() => handleToggleEnabled(index)}
-                    disabled={!mapping.audienceLabField}
+                    onChange={() => handleToggleEnabled(index)}
+                    className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
+                </label>
 
-                  {/* CSV Column Name */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{mapping.csvColumn}</p>
-                    {mapping.sampleValues && mapping.sampleValues.length > 0 && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        Sample: {mapping.sampleValues.slice(0, 2).join(', ')}
-                      </p>
-                    )}
+                {/* Column Info */}
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-800">{mapping.csvColumn}</p>
+                      {mapping.sampleValues.length > 0 && (
+                        <p className="text-sm text-slate-500">
+                          Sample: {mapping.sampleValues[0]}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Field Mapping Selector */}
-                  <div className="w-64">
-                    <Select
-                      value={mapping.audienceLabField || 'none'}
-                      onValueChange={(value) =>
-                        handleMappingChange(index, value === 'none' ? null : value as AudienceLabInputField)
-                      }
+                  {/* Field Mapping Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Maps to AudienceLab field:
+                    </label>
+                    <select
+                      value={mapping.audienceLabField || ''}
+                      onChange={(e) => handleMappingChange(index, e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={!mapping.enabled}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select field..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          <span className="text-muted-foreground">Don't use for matching</span>
-                        </SelectItem>
-                        {Object.entries(fieldsByCategory).map(([category, fields]) => (
-                          <div key={category}>
-                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                              {category}
-                            </div>
-                            {fields.map(field => (
-                              <SelectItem key={field} value={field}>
-                                {getFieldDisplayName(field)}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">-- Not mapped --</option>
+                      {Object.entries(fieldsByCategory).map(([category, fields]) => (
+                        <optgroup key={category} label={category}>
+                          {fields.map(field => (
+                            <option key={field} value={field}>
+                              {getFieldDisplayName(field)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+          ))}
         </div>
+      </div>
 
-        {/* Info Message */}
-        {enabledCount > 0 && (
-          <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-blue-900 dark:text-blue-100">
-              {matchOperator === 'OR' ? (
-                <>
-                  AudienceLab will match contacts if <strong>any</strong> of the {enabledCount} selected {enabledCount === 1 ? 'field matches' : 'fields match'}.
-                </>
-              ) : (
-                <>
-                  AudienceLab will match contacts only if <strong>all</strong> {enabledCount} selected fields match.
-                </>
-              )}
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Help Text */}
+      {enabledCount === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800">
+            ⚠️ Please select at least one column to use for matching
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
