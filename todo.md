@@ -42,3 +42,6 @@
 ## In Progress
 - [x] Fix Vercel deployment build errors (package manager configuration)
 
+
+- [x] Fix Vercel deployment showing source code instead of running app (create vercel.json)
+
