@@ -43,3 +43,15 @@ Note: Project has dual structure (client/ and client/src/). Multi-field componen
 - [x] Test field selection displays all AudienceLab fields
 - [x] Add new categories: System, Demographics, Contact, Skiptrace
 
+
+
+## Critical Bugs (Production)
+- [x] Fix "setConcurrency is not defined" error - Added setter functions to useState
+- [x] Fix "setBatchSize is not defined" error - Added setter functions to useState
+- [x] Fix empty results table - Changed CSV parser to use proper parseCSVLine function
+- [x] Fix results table display - Show all columns from enriched data instead of just selected fields
+- [x] Fix CSV download - Now uses proper CSV parser that handles quoted values
+- [ ] Credit calculation issue - AudienceLab returns all 74 fields but we only charge for selected fields (documented in code with TODO)
+
+Note: Credit calculation needs AudienceLab API to return actual cost. Current estimate may be lower than actual usage.
+

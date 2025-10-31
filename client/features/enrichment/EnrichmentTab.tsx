@@ -36,8 +36,8 @@ const EnrichmentTab = () => {
     
     // Job-based API doesn't need concurrency/batch settings
     // Keeping for UI compatibility but not used
-    const [concurrency] = useState(5);
-    const [batchSize] = useState(1000);
+    const [concurrency, setConcurrency] = useState(5);
+    const [batchSize, setBatchSize] = useState(1000);
     
     const creditSystem = useContext(CreditSystemContext);
 
@@ -280,6 +280,9 @@ const EnrichmentTab = () => {
             setJobStatus(`Completed! Enriched ${enrichedContacts.length} contacts in ${processingTime}s`);
 
             // Consume credits
+            // TODO: Credit calculation may be inaccurate - AudienceLab returns all 74 fields regardless of selection
+            // The actual cost should come from the AudienceLab API response, not our estimate
+            // For now, using the estimate based on selected fields
             creditSystem.consumeCredits(costEstimate.total_credits);
 
             console.log(`✅ Enrichment complete! ${enrichedContacts.length} contacts in ${processingTime}s`);
@@ -563,7 +566,7 @@ const EnrichmentTab = () => {
             {results.length > 0 && (
                 <ResultsTable 
                     data={results} 
-                    fields={selectedFields}
+                    fields={results.length > 0 ? Object.keys(results[0]) : []}
                     onExport={(format) => {
                         console.log(`Exported ${results.length} contacts as ${format}`);
                     }}

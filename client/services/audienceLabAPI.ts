@@ -204,30 +204,11 @@ export async function downloadJobResults(csvUrl: string): Promise<any[]> {
 
     const csvText = await response.text();
     
-    // Parse CSV (simple implementation, can be improved with a CSV library)
-    const lines = csvText.split('\n');
-    if (lines.length < 2) {
-        return [];
-    }
-
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    const records: any[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-        const record: any = {};
-
-        headers.forEach((header, index) => {
-            record[header] = values[index] || '';
-        });
-
-        records.push(record);
-    }
-
-    return records;
+    // Use proper CSV parser that handles quoted values and commas
+    const { parseCSV } = await import('../utils/csvParser');
+    const parsed = parseCSV(csvText);
+    
+    return parsed.data;
 }
 
 /**
