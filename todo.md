@@ -1,85 +1,14 @@
 # AudienceLab Enrichment Dashboard - TODO
 
-## Completed Features
-- [x] Frontend dashboard with React + TypeScript + Vite
-- [x] Admin mode toggle with unlimited credits
-- [x] CSV file upload and parsing
-- [x] Email validation (format check, duplicate removal)
-- [x] Field selection UI with preset packages (Basic, Standard, Professional, Premium, Complete)
-- [x] Custom field selection
-- [x] Cost estimator showing credit usage
-- [x] Processing settings (parallel batches, batch size)
-- [x] Progress tracking with real-time updates
-- [x] Results table with search and sort functionality
-- [x] CSV export with proper phone number formatting (quoted)
-- [x] JSON export functionality
-- [x] Completion notification banner with metrics
-- [x] Mock API for demonstration and testing
-- [x] Backend infrastructure (Express + tRPC 11 + Drizzle ORM + MySQL)
-- [x] Backend API proxy endpoint (audienceLabRouter)
-- [x] Git repository with comprehensive README
-- [x] CI/CD pipeline (GitHub Actions)
-- [x] Deployment documentation (Vercel, Netlify, Docker)
-
-## Known Issues
-- [ ] Real AudienceLab API integration not working in dev environment (CORS/tRPC client issues)
-  - Backend proxy endpoint exists but frontend can't call it correctly
-  - Currently using mock API as fallback for stable demo
-  - Should work correctly when deployed to production (Vercel/Netlify with serverless functions)
-
-## Future Enhancements
-- [ ] Add more detailed error messages for API failures
-- [ ] Add retry logic for failed enrichment requests
-- [ ] Add ability to save/load field selection presets
-- [ ] Add enrichment history/activity log
-- [ ] Add data quality metrics and validation reports
-- [ ] Add support for additional file formats (Excel, JSON)
-- [ ] Add webhook notifications for completed enrichments
-- [ ] Add team collaboration features (shared credits, user management)
-
-
-
-## In Progress
-- [x] Fix Vercel deployment build errors (package manager configuration)
-
-
-- [x] Fix Vercel deployment showing source code instead of running app (create vercel.json)
-
-
-- [x] Fix enrichment button not working when CSV is uploaded (was calling mock API with wrong parameters)
-- [ ] Switch from mock API to real AudienceLab API via backend proxy
-
-
-- [x] Fix Vercel serverless functions - backend API not accessible (returns HTML instead of API responses)
-- [x] Switch from mock API to real AudienceLab API via Vercel proxy
-
-
-
-## Job-Based API Redesign
-- [x] Update API client to support job submission (POST /enrichments)
-- [x] Add job polling functionality (GET /enrichments)
-- [x] Add CSV download and parsing from job results
-- [x] Redesign EnrichmentTab UI for job-based workflow
-- [x] Update serverless function to proxy job endpoints
-- [x] Test job submission and polling
-- [x] Deploy and verify on Vercel
-
-
-
-## Manus Platform Deployment
-- [x] Fix Docker build errors for Manus platform deployment
-
-
-
-## CORS Fix for CSV Download
-- [x] Update Vercel serverless function to proxy CSV downloads from Google Cloud Storage
-- [x] Update frontend API client to use proxy for CSV download
-- [ ] Deploy and test CSV download functionality
-
-
+## Critical Production Issues (URGENT)
+- [x] Fix missing index.css in production build (MIME type error) - Added CSS import to index.tsx
+- [ ] Fix enrichment job submission error: "failed to close storage writer: rpc error: code = Unavailable desc = connection error" - This is an AudienceLab API timeout issue, not our code
+- [x] Add all 48 AudienceLab input fields to column mapping (expanded from 16 to 48 fields)
+- [ ] Remove Tailwind CDN from production (use PostCSS build) - Low priority
 
 ## Multi-Field Input Matching
-- [x] Parse all CSV columns (not just email)
+- [x] Create column mapping types with 16 AudienceLab input fields
+- [x] Implement CSV parser utility
 - [x] Add column mapping UI to select which CSV columns to use for matching
 - [x] Map CSV columns to AudienceLab input fields (EMAIL, FIRST_NAME, LAST_NAME, COMPANY_NAME, etc.)
 - [x] Add OR/AND toggle for match logic
@@ -98,20 +27,9 @@ Note: Project has dual structure (client/ and client/src/). Multi-field componen
 
 
 
-## Current Task: Integrate ColumnMappingStep into EnrichmentTab
-- [x] Add CSV parsing state (parsedCSV, columnMappings, matchOperator)
-- [x] Update processFile to use parseCSV utility
-- [x] Add ColumnMappingStep between upload and field selection
-- [x] Update validation to check mapped columns instead of just email
-- [x] Update job submission to build records from mapped columns
-- [x] Update step numbering (1. Upload, 2. Map Columns, 3. Select Fields)
-- [x] Test with sample CSV file
-
-
-
-## Bugs to Fix
-- [ ] Column mapping step (step 2) not appearing after CSV upload in production
-- [ ] Enriched results not displaying in table after job completion (job completes successfully on AudienceLab)
-- [ ] Debug CSV parsing in production environment
-- [ ] Debug results download and parsing logic
+## Current Task: Fix Production Issues
+- [ ] Investigate index.css build configuration
+- [ ] Fix Vite build to include index.css
+- [ ] Debug storage writer timeout error
+- [ ] Expand field selection to include all 40+ AudienceLab fields
 

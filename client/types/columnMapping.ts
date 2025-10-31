@@ -9,21 +9,70 @@
  * These are the fields that can be used for MATCHING (not enrichment output)
  */
 export const AUDIENCELAB_INPUT_FIELDS = [
+  // Email fields
   'EMAIL',
   'PERSONAL_EMAIL',
   'BUSINESS_EMAIL',
+  'SHA256_PERSONAL_EMAIL',
+  
+  // Name fields
   'FIRST_NAME',
   'LAST_NAME',
+  'FULL_NAME',
+  
+  // Phone fields
   'PHONE',
+  'MOBILE_PHONE',
+  
+  // Personal address fields
   'PERSONAL_ADDRESS',
   'PERSONAL_CITY',
   'PERSONAL_STATE',
   'PERSONAL_ZIP',
+  'PERSONAL_COUNTRY',
+  
+  // Professional fields
+  'JOB_TITLE',
+  'SENIORITY',
+  'DEPARTMENT',
+  'YEARS_EXPERIENCE',
+  'PREVIOUS_COMPANIES',
+  
+  // Company fields
   'COMPANY_NAME',
   'COMPANY_DOMAIN',
   'COMPANY_INDUSTRY',
-  'SHA256_PERSONAL_EMAIL',
+  'COMPANY_SIZE',
+  'COMPANY_REVENUE',
+  'COMPANY_FOUNDED',
+  'COMPANY_TYPE',
+  'COMPANY_LOCATION',
+  'COMPANY_PHONE',
+  'COMPANY_EMPLOYEES',
+  'COMPANY_TECHNOLOGIES',
+  'COMPANY_DESCRIPTION',
+  
+  // Location fields
+  'CITY',
+  'STATE',
+  'COUNTRY',
+  'ZIP_CODE',
+  'TIMEZONE',
+  
+  // Social fields
   'LINKEDIN_URL',
+  'TWITTER_URL',
+  'FACEBOOK_URL',
+  
+  // Premium fields
+  'GENDER',
+  'AGE_RANGE',
+  'EDUCATION',
+  'SCHOOL',
+  'SKILLS',
+  'INTERESTS',
+  
+  // Other
   'UP_ID',
 ] as const;
 
@@ -80,12 +129,19 @@ export const AUTO_MAPPING_PATTERNS: Record<string, AudienceLabInputField> = {
   'address': 'PERSONAL_ADDRESS',
   'street': 'PERSONAL_ADDRESS',
   'street_address': 'PERSONAL_ADDRESS',
-  'city': 'PERSONAL_CITY',
-  'state': 'PERSONAL_STATE',
-  'zip': 'PERSONAL_ZIP',
-  'zipcode': 'PERSONAL_ZIP',
-  'zip_code': 'PERSONAL_ZIP',
-  'postal_code': 'PERSONAL_ZIP',
+  'personal_address': 'PERSONAL_ADDRESS',
+  'personal_city': 'PERSONAL_CITY',
+  'personal_state': 'PERSONAL_STATE',
+  'personal_zip': 'PERSONAL_ZIP',
+  
+  // General location patterns
+  'city': 'CITY',
+  'state': 'STATE',
+  'country': 'COUNTRY',
+  'zip': 'ZIP_CODE',
+  'zipcode': 'ZIP_CODE',
+  'zip_code': 'ZIP_CODE',
+  'postal_code': 'ZIP_CODE',
   
   // Company patterns
   'company': 'COMPANY_NAME',
@@ -104,6 +160,71 @@ export const AUTO_MAPPING_PATTERNS: Record<string, AudienceLabInputField> = {
   'linkedin': 'LINKEDIN_URL',
   'linkedin_url': 'LINKEDIN_URL',
   'linkedin_profile': 'LINKEDIN_URL',
+  'twitter': 'TWITTER_URL',
+  'twitter_url': 'TWITTER_URL',
+  'facebook': 'FACEBOOK_URL',
+  'facebook_url': 'FACEBOOK_URL',
+  
+  // Professional patterns
+  'job_title': 'JOB_TITLE',
+  'jobtitle': 'JOB_TITLE',
+  'title': 'JOB_TITLE',
+  'position': 'JOB_TITLE',
+  'role': 'JOB_TITLE',
+  'seniority': 'SENIORITY',
+  'level': 'SENIORITY',
+  'department': 'DEPARTMENT',
+  'dept': 'DEPARTMENT',
+  'years_experience': 'YEARS_EXPERIENCE',
+  'years_of_experience': 'YEARS_EXPERIENCE',
+  'experience': 'YEARS_EXPERIENCE',
+  'previous_companies': 'PREVIOUS_COMPANIES',
+  'past_companies': 'PREVIOUS_COMPANIES',
+  
+  // Company extended patterns
+  'company_size': 'COMPANY_SIZE',
+  'size': 'COMPANY_SIZE',
+  'company_revenue': 'COMPANY_REVENUE',
+  'revenue': 'COMPANY_REVENUE',
+  'company_founded': 'COMPANY_FOUNDED',
+  'founded': 'COMPANY_FOUNDED',
+  'year_founded': 'COMPANY_FOUNDED',
+  'company_type': 'COMPANY_TYPE',
+  'company_location': 'COMPANY_LOCATION',
+  'company_phone': 'COMPANY_PHONE',
+  'company_employees': 'COMPANY_EMPLOYEES',
+  'employees': 'COMPANY_EMPLOYEES',
+  'company_technologies': 'COMPANY_TECHNOLOGIES',
+  'technologies': 'COMPANY_TECHNOLOGIES',
+  'tech_stack': 'COMPANY_TECHNOLOGIES',
+  'company_description': 'COMPANY_DESCRIPTION',
+  'description': 'COMPANY_DESCRIPTION',
+  
+  // Premium patterns
+  'gender': 'GENDER',
+  'sex': 'GENDER',
+  'age_range': 'AGE_RANGE',
+  'age': 'AGE_RANGE',
+  'education': 'EDUCATION',
+  'degree': 'EDUCATION',
+  'school': 'SCHOOL',
+  'university': 'SCHOOL',
+  'college': 'SCHOOL',
+  'skills': 'SKILLS',
+  'skill': 'SKILLS',
+  'interests': 'INTERESTS',
+  'interest': 'INTERESTS',
+  'hobbies': 'INTERESTS',
+  
+  // Location extended patterns
+  'timezone': 'TIMEZONE',
+  'time_zone': 'TIMEZONE',
+  'full_name': 'FULL_NAME',
+  'fullname': 'FULL_NAME',
+  'mobile_phone': 'MOBILE_PHONE',
+  'cell': 'MOBILE_PHONE',
+  'cell_phone': 'MOBILE_PHONE',
+  'personal_country': 'PERSONAL_COUNTRY',
 };
 
 /**
