@@ -76,3 +76,19 @@
 - [x] Update frontend API client to use proxy for CSV download
 - [ ] Deploy and test CSV download functionality
 
+
+
+## Multi-Field Input Matching
+- [x] Parse all CSV columns (not just email)
+- [x] Add column mapping UI to select which CSV columns to use for matching
+- [x] Map CSV columns to AudienceLab input fields (EMAIL, FIRST_NAME, LAST_NAME, COMPANY_NAME, etc.)
+- [x] Add OR/AND toggle for match logic
+- [x] Update job submission to include all selected input columns
+- [x] Update validation to support multi-field input (basic implementation)
+- [ ] Complete EnrichmentTab UI integration
+- [ ] Update cost estimation for multi-field matching
+- [ ] Test with various CSV structures
+- [ ] Deploy and verify multi-field matching works
+
+See MULTI_FIELD_PROGRESS.md for detailed implementation status
+

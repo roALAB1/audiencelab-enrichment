@@ -83,22 +83,21 @@ async function apiRequest<T>(
  * Create an enrichment job
  * 
  * @param name - Job name for tracking
- * @param emails - Array of email addresses to enrich
- * @param fields - Array of field IDs to enrich (not used in job submission, all fields returned)
+ * @param records - Array of contact records with input fields
+ * @param columns - Array of column names being provided (e.g., ['EMAIL', 'FIRST_NAME'])
+ * @param operator - Match operator: 'OR' or 'AND'
  * @returns Job ID and initial status
  */
 export async function createEnrichmentJob(
     name: string,
-    emails: string[],
-    fields?: string[]  // Fields parameter kept for compatibility but not used in API
+    records: Record<string, string>[],
+    columns: string[],
+    operator: 'OR' | 'AND' = 'OR'
 ): Promise<CreateJobResponse> {
-    // Convert emails to records format
-    const records = emails.map(email => ({ email }));
-
     const request: CreateJobRequest = {
         name,
-        operator: 'OR',
-        columns: ['EMAIL'],  // We're only providing email as input
+        operator,
+        columns,
         records,
     };
 
@@ -235,14 +234,18 @@ export async function downloadJobResults(csvUrl: string): Promise<any[]> {
  * Complete enrichment workflow: submit job, poll for completion, download results
  * 
  * @param name - Job name
- * @param emails - Array of emails to enrich
- * @param fields - Fields to enrich (kept for compatibility)
+ * @param records - Array of contact records with input fields
+ * @param columns - Array of column names being provided
+ * @param operator - Match operator: 'OR' or 'AND'
+ * @param fields - Fields to enrich (kept for compatibility, not used)
  * @param onProgress - Progress callback
  * @returns Enriched contact records
  */
 export async function enrichContactsJobBased(
     name: string,
-    emails: string[],
+    records: Record<string, string>[],
+    columns: string[],
+    operator: 'OR' | 'AND',
     fields: string[],
     onProgress?: (status: {
         stage: 'submitting' | 'polling' | 'downloading' | 'complete';
@@ -255,7 +258,7 @@ export async function enrichContactsJobBased(
         onProgress({ stage: 'submitting', progress: 0 });
     }
 
-    const { jobId } = await createEnrichmentJob(name, emails, fields);
+    const { jobId } = await createEnrichmentJob(name, records, columns, operator);
 
     // Stage 2: Poll for completion
     if (onProgress) {
