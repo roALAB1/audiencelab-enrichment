@@ -55,3 +55,12 @@ Note: Project has dual structure (client/ and client/src/). Multi-field componen
 
 Note: Credit calculation needs AudienceLab API to return actual cost. Current estimate may be lower than actual usage.
 
+
+
+## New Critical Bug
+- [x] Fix "unsupported column JOB_TITLE" error - Used official API documentation
+- [x] Research AudienceLab API documentation - Found AUDIENCELAB_API.md with exact list
+- [x] Update AUDIENCELAB_INPUT_FIELDS to use exact API column names - Now matches the 16 supported fields
+
+Note: AudienceLab API only supports 16 input fields for matching (EMAIL, PERSONAL_EMAIL, BUSINESS_EMAIL, FIRST_NAME, LAST_NAME, PHONE, PERSONAL_ADDRESS, PERSONAL_CITY, PERSONAL_STATE, PERSONAL_ZIP, COMPANY_NAME, COMPANY_DOMAIN, COMPANY_INDUSTRY, SHA256_PERSONAL_EMAIL, LINKEDIN_URL, UP_ID). JOB_TITLE and other fields are OUTPUT only.
+
