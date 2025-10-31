@@ -107,3 +107,11 @@ Note: Project has dual structure (client/ and client/src/). Multi-field componen
 - [x] Update step numbering (1. Upload, 2. Map Columns, 3. Select Fields)
 - [x] Test with sample CSV file
 
+
+
+## Bugs to Fix
+- [ ] Column mapping step (step 2) not appearing after CSV upload in production
+- [ ] Enriched results not displaying in table after job completion (job completes successfully on AudienceLab)
+- [ ] Debug CSV parsing in production environment
+- [ ] Debug results download and parsing logic
+
