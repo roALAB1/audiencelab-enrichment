@@ -2,7 +2,7 @@
  * Vercel Serverless Function - AudienceLab API Proxy
  * 
  * Proxies requests to the AudienceLab API to avoid CORS issues
- * Supports job-based enrichment workflow
+ * Supports job-based enrichment workflow and CSV downloads
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -20,9 +20,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).end();
     }
 
-    // Only allow POST requests (our proxy uses POST to send endpoint/method/body)
+    // Handle CSV download proxy (GET request with url query param)
+    if (req.method === 'GET' && req.query.url) {
+        try {
+            const csvUrl = decodeURIComponent(req.query.url as string);
+            console.log(`[CSV Proxy] Downloading: ${csvUrl}`);
+            
+            const csvResponse = await fetch(csvUrl);
+            
+            if (!csvResponse.ok) {
+                console.error(`[CSV Proxy] Download failed: ${csvResponse.status} ${csvResponse.statusText}`);
+                return res.status(csvResponse.status).json({
+                    error: 'CSV download failed',
+                    message: `Failed to download CSV: ${csvResponse.statusText}`,
+                });
+            }
+            
+            const csvData = await csvResponse.text();
+            console.log(`[CSV Proxy] Downloaded ${csvData.length} bytes`);
+            
+            // Set headers for CSV response
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename="enrichment-results.csv"');
+            
+            return res.status(200).send(csvData);
+        } catch (error: any) {
+            console.error('[CSV Proxy] Error:', error);
+            return res.status(500).json({
+                error: 'CSV download failed',
+                message: error.message,
+            });
+        }
+    }
+
+    // Only allow POST requests for API proxy
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Only POST requests are allowed' } });
+        return res.status(405).json({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Only POST requests are allowed for API proxy' } });
     }
 
     // Check API key

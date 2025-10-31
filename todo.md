@@ -69,3 +69,10 @@
 ## Manus Platform Deployment
 - [x] Fix Docker build errors for Manus platform deployment
 
+
+
+## CORS Fix for CSV Download
+- [x] Update Vercel serverless function to proxy CSV downloads from Google Cloud Storage
+- [x] Update frontend API client to use proxy for CSV download
+- [ ] Deploy and test CSV download functionality
+

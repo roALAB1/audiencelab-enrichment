@@ -195,9 +195,9 @@ export async function pollJobCompletion(
  * @returns Parsed contact records
  */
 export async function downloadJobResults(csvUrl: string): Promise<any[]> {
-    // For Google Cloud Storage URLs, we need to fetch directly
-    // The URL should be publicly accessible
-    const response = await fetch(csvUrl);
+    // Proxy the CSV download through our Vercel function to avoid CORS issues
+    const proxyUrl = `/api/audiencelab?url=${encodeURIComponent(csvUrl)}`;
+    const response = await fetch(proxyUrl);
 
     if (!response.ok) {
         throw new Error(`Failed to download results: ${response.status}`);
