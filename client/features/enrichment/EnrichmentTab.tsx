@@ -8,11 +8,22 @@ import { CreditSystemContext } from '../../App';
 import { enrichContactsJobBased, EnrichmentJob } from '../../services/audienceLabAPI';
 import ProgressTracker, { ProgressData } from '../../components/ProgressTracker';
 import ResultsTable from '../../components/ResultsTable';
+import ColumnMappingStep from './ColumnMappingStep';
+import { parseCSV, ParsedCSV } from '../../utils/csvParser';
+import type { ColumnMapping, MatchOperator } from '../../types/columnMapping';
 
 type EnrichmentStatus = 'idle' | 'submitting' | 'polling' | 'downloading' | 'complete' | 'error';
 
 const EnrichmentTab = () => {
+    // File and CSV data
     const [file, setFile] = useState<File | null>(null);
+    const [parsedCSV, setParsedCSV] = useState<ParsedCSV | null>(null);
+    
+    // Column mapping for multi-field input
+    const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
+    const [matchOperator, setMatchOperator] = useState<MatchOperator>('OR');
+    
+    // Validation and enrichment
     const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
     const [selectedFields, setSelectedFields] = useState<string[]>(FIELD_PACKAGES.find(p => p.id === 'basic')?.fields as string[] || []);
     const [activePackage, setActivePackage] = useState<string>('basic');
@@ -34,10 +45,12 @@ const EnrichmentTab = () => {
         if (files && files[0]) {
             setFile(files[0]);
             processFile(files[0]);
-            // Reset previous results
+            // Reset previous state
             setResults([]);
             setStatus('idle');
             setError(null);
+            setColumnMappings([]);
+            setParsedCSV(null);
         }
     };
     
@@ -45,10 +58,14 @@ const EnrichmentTab = () => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const text = e.target?.result as string;
-            // Simple CSV email extraction: find anything that looks like an email
-            const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
-            const emails = text.match(emailRegex) || [];
-            validateEmailBatch(emails);
+            try {
+                const parsed = parseCSV(text);
+                setParsedCSV(parsed);
+                // Validate the parsed data
+                validateParsedCSV(parsed);
+            } catch (error) {
+                setError(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
         };
         reader.readAsText(file);
     };
@@ -75,6 +92,64 @@ const EnrichmentTab = () => {
         });
         setValidationResult(results);
     };
+
+    const validateParsedCSV = (parsed: ParsedCSV) => {
+        // Initial validation - just count rows
+        // Detailed validation happens after column mapping
+        const results: ValidationResult = {
+            valid: [],
+            invalid: [],
+            duplicates: [],
+            total: parsed.data.length
+        };
+        setValidationResult(results);
+    };
+
+    // Validate records based on column mappings
+    const validateMappedRecords = useCallback(() => {
+        if (!parsedCSV || columnMappings.length === 0) return;
+
+        const enabledMappings = columnMappings.filter(m => m.enabled && m.audienceLabField);
+        if (enabledMappings.length === 0) {
+            setValidationResult({
+                valid: [],
+                invalid: [],
+                duplicates: [],
+                total: parsedCSV.data.length
+            });
+            return;
+        }
+
+        const results: ValidationResult = { valid: [], invalid: [], duplicates: [], total: parsedCSV.data.length };
+        const seen = new Set<string>();
+
+        parsedCSV.data.forEach((row, index) => {
+            // Build a unique key from all enabled mapped fields
+            const keyParts: string[] = [];
+            let hasAnyValue = false;
+
+            for (const mapping of enabledMappings) {
+                const value = row[mapping.csvColumn];
+                if (value && value.trim()) {
+                    keyParts.push(value.trim().toLowerCase());
+                    hasAnyValue = true;
+                }
+            }
+
+            const uniqueKey = keyParts.join('|');
+
+            if (!hasAnyValue) {
+                results.invalid.push({ email: `Row ${index + 1}`, reason: 'No mapped values found' });
+            } else if (seen.has(uniqueKey)) {
+                results.duplicates.push(uniqueKey);
+            } else {
+                results.valid.push(uniqueKey);
+                seen.add(uniqueKey);
+            }
+        });
+
+        setValidationResult(results);
+    }, [parsedCSV, columnMappings]);
     
     const handleFieldToggle = (fieldId: string) => {
         setActivePackage('custom');
@@ -92,6 +167,13 @@ const EnrichmentTab = () => {
             }
         }
     };
+
+    // Trigger validation when column mappings change
+    React.useEffect(() => {
+        if (columnMappings.length > 0) {
+            validateMappedRecords();
+        }
+    }, [columnMappings, validateMappedRecords]);
 
     const groupedFields = useMemo(() => {
         return ALL_FIELDS.reduce((acc, field) => {
@@ -113,10 +195,34 @@ const EnrichmentTab = () => {
 
     // Start enrichment with job-based API
     const handleStartEnrichment = async () => {
-        if (!validationResult || !costEstimate || !creditSystem) {
+        if (!validationResult || !costEstimate || !creditSystem || !parsedCSV) {
             console.error('❌ Missing required data');
             return;
         }
+
+        // Build records from column mappings
+        const enabledMappings = columnMappings.filter(m => m.enabled && m.audienceLabField);
+        if (enabledMappings.length === 0) {
+            setError('Please select at least one column to use for matching');
+            return;
+        }
+
+        // Build records array with mapped fields
+        const records = parsedCSV.data.map(row => {
+            const record: Record<string, string> = {};
+            enabledMappings.forEach(mapping => {
+                const value = row[mapping.csvColumn];
+                if (value && mapping.audienceLabField) {
+                    record[mapping.audienceLabField] = value.trim();
+                }
+            });
+            return record;
+        }).filter(record => Object.keys(record).length > 0); // Remove empty records
+
+        // Build columns array
+        const columns = enabledMappings
+            .map(m => m.audienceLabField)
+            .filter((col): col is string => col !== null);
 
         setError(null);
         setResults([]);
@@ -129,7 +235,9 @@ const EnrichmentTab = () => {
         try {
             const enrichedContacts = await enrichContactsJobBased(
                 jobName,
-                validationResult.valid,
+                records,
+                columns,
+                matchOperator,
                 selectedFields,
                 (statusUpdate) => {
                     // Update status based on stage
@@ -252,7 +360,7 @@ const EnrichmentTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
-                        <CardHeader><CardTitle>1. Upload Contacts</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>1. Upload CSV File</CardTitle></CardHeader>
                         {!file ? (
                              <label htmlFor="file-upload" className="cursor-pointer">
                                 <div onDragOver={handleDragOver} onDrop={handleDrop} className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-300 rounded-lg text-center hover:border-blue-500 transition-colors">
@@ -301,8 +409,20 @@ const EnrichmentTab = () => {
                         )}
                     </Card>
 
+                    {parsedCSV && (
+                        <Card>
+                            <CardHeader><CardTitle>2. Map Input Columns</CardTitle></CardHeader>
+                            <ColumnMappingStep
+                                csvColumns={parsedCSV.columns}
+                                sampleData={parsedCSV.data[0] || {}}
+                                onMappingsChange={setColumnMappings}
+                                onOperatorChange={setMatchOperator}
+                            />
+                        </Card>
+                    )}
+
                     <Card>
-                        <CardHeader><CardTitle>2. Select Fields to Enrich</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>3. Select Fields to Enrich</CardTitle></CardHeader>
                         <div className="flex flex-wrap gap-2 mb-6">
                             {FIELD_PACKAGES.map(pkg => (
                                 <button 

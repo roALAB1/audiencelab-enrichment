@@ -86,7 +86,8 @@
 - [x] Update job submission to include all selected input columns
 - [x] Update validation to support multi-field input (basic implementation)
 - [x] Create simplified ColumnMappingStep component (no shadcn dependencies)
-- [ ] Integrate ColumnMappingStep into EnrichmentTab workflow
+- [x] Integrate ColumnMappingStep into EnrichmentTab workflow
+- [x] Update job submission to use records/columns/operator
 - [ ] Update cost estimation for multi-field matching
 - [ ] Test with various CSV structures
 - [ ] Deploy and verify multi-field matching works
@@ -94,4 +95,15 @@
 See MULTI_FIELD_PROGRESS.md for detailed implementation status
 
 Note: Project has dual structure (client/ and client/src/). Multi-field components created in client/ structure to match existing EnrichmentTab.
+
+
+
+## Current Task: Integrate ColumnMappingStep into EnrichmentTab
+- [x] Add CSV parsing state (parsedCSV, columnMappings, matchOperator)
+- [x] Update processFile to use parseCSV utility
+- [x] Add ColumnMappingStep between upload and field selection
+- [x] Update validation to check mapped columns instead of just email
+- [x] Update job submission to build records from mapped columns
+- [x] Update step numbering (1. Upload, 2. Map Columns, 3. Select Fields)
+- [x] Test with sample CSV file
 
