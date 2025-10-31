@@ -33,3 +33,13 @@ Note: Project has dual structure (client/ and client/src/). Multi-field componen
 - [ ] Debug storage writer timeout error
 - [ ] Expand field selection to include all 40+ AudienceLab fields
 
+
+
+## Update Field Selection to Match AudienceLab CSV
+- [x] Parse AudienceLab CSV header to get all 74 field names
+- [x] Update constants.ts ALL_FIELDS to use exact AudienceLab field names (UUID, FIRST_NAME, BUSINESS_EMAIL, etc.)
+- [x] Map field IDs to match AudienceLab output format
+- [x] Update field packages to reference correct field IDs
+- [x] Test field selection displays all AudienceLab fields
+- [x] Add new categories: System, Demographics, Contact, Skiptrace
+

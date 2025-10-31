@@ -9,14 +9,14 @@ export interface UserCredits {
   renewal_date: string;
 }
 
-export type FieldCategory = 'personal' | 'professional' | 'location' | 'company' | 'social' | 'premium';
+export type FieldCategory = 'personal' | 'professional' | 'location' | 'company' | 'social' | 'premium' | 'demographics' | 'contact' | 'skiptrace' | 'system';
 
 export interface Field {
   id: string;
   name: string;
   cost: number;
   category: FieldCategory;
-  note?: 'Base field' | 'Premium' | 'Derived' | 'Company data';
+  note?: 'Base field' | 'Premium' | 'Derived' | 'Company data' | 'Metadata' | 'Hash' | 'Verified' | 'Skiptrace' | 'System ID';
   icon?: string;
 }
 
