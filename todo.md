@@ -46,5 +46,10 @@
 - [x] Fix Vercel deployment showing source code instead of running app (create vercel.json)
 
 
-- [ ] Fix enrichment button not working when CSV is uploaded
+- [x] Fix enrichment button not working when CSV is uploaded (was calling mock API with wrong parameters)
+- [ ] Switch from mock API to real AudienceLab API via backend proxy
+
+
+- [x] Fix Vercel serverless functions - backend API not accessible (returns HTML instead of API responses)
+- [x] Switch from mock API to real AudienceLab API via Vercel proxy
 

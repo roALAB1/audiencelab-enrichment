@@ -6,7 +6,8 @@
  * Base URL: https://api.audiencelab.io
  */
 
-const API_BASE = 'https://api.audiencelab.io';
+// Use Vercel serverless function proxy to avoid CORS issues
+const API_BASE = '/api/audiencelab';
 
 export interface EnrichmentRequest {
     emails: string[];
@@ -41,20 +42,12 @@ export interface APIError {
 
 /**
  * Get API key from environment or localStorage
+ * Note: API key is now handled server-side in Vercel function
  */
 function getAPIKey(): string {
-    // Try environment variable first (for production)
-    if (import.meta.env.VITE_AUDIENCELAB_API_KEY) {
-        return import.meta.env.VITE_AUDIENCELAB_API_KEY;
-    }
-    
-    // Fall back to localStorage (for development/testing)
-    const storedKey = localStorage.getItem('audiencelab_api_key');
-    if (storedKey) {
-        return storedKey;
-    }
-    
-    throw new Error('API key not found. Please set VITE_AUDIENCELAB_API_KEY or configure in settings.');
+    // API key is handled by the Vercel serverless function
+    // No need to expose it client-side
+    return 'handled-by-server';
 }
 
 /**
@@ -62,17 +55,20 @@ function getAPIKey(): string {
  */
 async function apiRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    method: string = 'POST',
+    body?: any
 ): Promise<T> {
-    const apiKey = getAPIKey();
-    
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
+    // Call Vercel serverless function which proxies to AudienceLab API
+    const response = await fetch(API_BASE, {
+        method: 'POST',
         headers: {
-            'X-API-Key': apiKey,
             'Content-Type': 'application/json',
-            ...options.headers,
         },
+        body: JSON.stringify({
+            endpoint,
+            method,
+            body,
+        }),
     });
 
     if (!response.ok) {
@@ -98,14 +94,14 @@ export async function enrichContacts(
         throw new Error('Maximum batch size is 1,000 emails');
     }
 
-    const response = await apiRequest<EnrichmentResponse>('/enrich/v1/query', {
-        method: 'POST',
-        body: JSON.stringify({
+    const response = await apiRequest<EnrichmentResponse>(
+        '/enrich',
+        'POST',
+        {
             emails,
-            columns: fields,
-            page_size: 100,
-        }),
-    });
+            fields,
+        }
+    );
 
     return response;
 }
