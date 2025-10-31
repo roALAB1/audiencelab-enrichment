@@ -116,7 +116,16 @@ const EnrichmentTab = () => {
 
     // Start enrichment
     const handleStartEnrichment = async () => {
-        if (!validationResult || !costEstimate || !creditSystem) return;
+        console.log('🔍 Enrichment button clicked!');
+        console.log('📊 Validation Result:', validationResult);
+        console.log('💰 Cost Estimate:', costEstimate);
+        console.log('⚙️ Credit System:', creditSystem);
+        console.log('👑 Admin Mode:', creditSystem?.isAdminMode);
+        
+        if (!validationResult || !costEstimate || !creditSystem) {
+            console.error('❌ Missing required data:', { validationResult: !!validationResult, costEstimate: !!costEstimate, creditSystem: !!creditSystem });
+            return;
+        }
 
         setStatus('processing');
         setError(null);
@@ -375,7 +384,11 @@ const EnrichmentTab = () => {
                     </Card>
 
                     <button 
-                        onClick={handleStartEnrichment}
+                        onClick={() => {
+                            console.log('🖱️ Button clicked - Disabled:', !costEstimate || !costEstimate.can_afford || status === 'processing');
+                            console.log('📋 Button state:', { costEstimate: !!costEstimate, can_afford: costEstimate?.can_afford, status });
+                            handleStartEnrichment();
+                        }}
                         disabled={!costEstimate || !costEstimate.can_afford || status === 'processing'} 
                         className="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center text-lg"
                     >

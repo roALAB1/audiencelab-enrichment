@@ -45,3 +45,6 @@
 
 - [x] Fix Vercel deployment showing source code instead of running app (create vercel.json)
 
+
+- [ ] Fix enrichment button not working when CSV is uploaded
+
